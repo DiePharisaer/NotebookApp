@@ -1,6 +1,7 @@
 package com.tlc.laque.notebookapp;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.media.Image;
@@ -8,6 +9,9 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.LinearLayoutCompat;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -20,7 +24,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -49,6 +55,9 @@ public class MainActivity extends AppCompatActivity
     Resources res;
     ListView alphabetView;
     Context context;
+    LinearLayout wordsContainer;
+    String word1;
+    String word2;
 
 
     @Override
@@ -61,11 +70,48 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+
+        wordsContainer = (LinearLayout) findViewById(R.id.layout_for_text);
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //addNewWord to DB
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setTitle("Add a word pair");
+                LinearLayout layout = new LinearLayout(context);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                final EditText input1 = new EditText(context);
+                input1.setHint(res.getString(R.string.originalWord));
+                input1.setInputType(InputType.TYPE_CLASS_TEXT);
+
+
+                final EditText input2 = new EditText(context);
+                input2.setHint(res.getString(R.string.translatedWord));
+                input2.setInputType(InputType.TYPE_CLASS_TEXT);
+
+                layout.addView(input1);
+                layout.addView(input2);
+                builder.setView(layout);
+
+                builder.setPositiveButton(res.getString(R.string.addDialog), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        word1 = input1.getText().toString();
+                        word2 = input2.getText().toString();
+
+                        TextView newWord = new TextView(context);
+                        newWord.setText(word1 + " " + res.getString(R.string.means) + " " + word2);
+                        wordsContainer.addView(newWord);
+                    }
+                });
+                builder.setNegativeButton(res.getString(R.string.cancelDialog), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+                builder.show();
             }
         });
 
