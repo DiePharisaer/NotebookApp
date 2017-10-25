@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "686672832083",
+    "project_id": "firebase-notebookapp"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:686672832083:android:56823a0400631b6e",
+        "android_client_info": {
+          "package_name": "com.tlc.laque.notebookapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "686672832083-li1rqjr01filh6ark3q26n4fv6idt230.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tlc.laque.notebookapp",
+            "certificate_hash": "17eae5d184f7b5079744cf70058665159a4ebd7d"
+          }
+        },
+        {
+          "client_id": "686672832083-qaebpuepfk3ihj7ddf7pjo6nhs4vke5f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAaQPvH6g1LPhjbSq4jt5ySU2gka_vxfE4"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
