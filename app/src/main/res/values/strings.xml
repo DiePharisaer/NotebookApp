@@ -13,7 +13,7 @@
     <string name="deleteDialog">Delete</string>
     <string name="originalWord">Word</string>
     <string name="translatedWord">Translated Word</string>
-    <string name="means">means</string>
+    <string name="arrow">--></string>
 
     <string-array name="alphabet">
         <item>A</item>

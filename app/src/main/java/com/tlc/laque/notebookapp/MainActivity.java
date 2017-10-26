@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.media.Image;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -38,12 +40,13 @@ import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 
-import java.util.List;
-
 //Check that words are only letters
 //sign out option
 //import/export csv
-//db
+//store new words in db
+//select corresponding words from db when click on listview
+//delete word from db and update ui
+//use different languages
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, GoogleApiClient.OnConnectionFailedListener {
@@ -58,6 +61,10 @@ public class MainActivity extends AppCompatActivity
     LinearLayout wordsContainer;
     String word1;
     String word2;
+    private SQLiteDatabase db;
+    SQLiteHelper helper;
+
+
 
 
     @Override
@@ -65,6 +72,8 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         res = getResources();
         context = getApplicationContext();
+        helper = new SQLiteHelper(this);
+        db = helper.getReadableDatabase();
 
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -100,9 +109,9 @@ public class MainActivity extends AppCompatActivity
                         word1 = input1.getText().toString();
                         word2 = input2.getText().toString();
 
-                        TextView newWord = new TextView(context);
-                        newWord.setText(word1 + " " + res.getString(R.string.means) + " " + word2);
-                        wordsContainer.addView(newWord);
+                        insertRecord(word1, word2);
+
+                        updateWordList(word1.substring(0).toLowerCase());
                     }
                 });
                 builder.setNegativeButton(res.getString(R.string.cancelDialog), new DialogInterface.OnClickListener() {
@@ -142,10 +151,11 @@ public class MainActivity extends AppCompatActivity
         alphabetView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                makeToast(((TextView) view).getText().toString());
+                updateWordList(((TextView) view).getText().toString().toLowerCase());
             }
         });
 
+        updateWordList("a");
     }
 
     @Override
@@ -256,6 +266,43 @@ public class MainActivity extends AppCompatActivity
             name.setText(Resources.getSystem().getString(R.string.defaultName));
             profilePic.setImageDrawable(res.getDrawable(android.R.drawable.sym_def_app_icon, this.getTheme()));
         }
+    }
+
+    public void updateWordList(String selectedLetter){
+        wordsContainer.removeAllViews();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM " + helper.tableName + " WHERE " + helper.FIRST_LETTER + " = '" + selectedLetter + "'", null);
+
+        //cycle and add the textviews
+        if(cursor.getCount()>0) {
+            for (int i = 0; i < cursor.getCount(); i++) {
+                cursor.moveToNext();
+                word1 = cursor.getString(cursor.getColumnIndexOrThrow(helper.ORIGINAL_WORD));
+                word2 = cursor.getString(cursor.getColumnIndexOrThrow(helper.TRANSLATED_WORD));
+
+                TextView newWord = new TextView(context);
+                newWord.setText(word1 + " " + res.getString(R.string.arrow) + " " + word2);
+                wordsContainer.addView(newWord);
+            }
+        }
+
+        cursor.close();
+        db.close();
+    }
+
+    public void insertRecord(String originalWord, String translatedWord) {
+        db.execSQL("INSERT INTO " + helper.tableName + "(" + helper.ORIGINAL_WORD + "," + helper.TRANSLATED_WORD + "," + helper.FIRST_LETTER + ") VALUES('" + originalWord + "','" + translatedWord + "','" + originalWord.substring(0).toLowerCase() + "')");
+        db.close();
+    }
+
+    public void updateRecord(String originalWord, String translatedWord, int idToDelete) {
+        db.execSQL("update " + helper.tableName + " set " + helper.ORIGINAL_WORD + " = '" + originalWord + "', " + helper.TRANSLATED_WORD + " = '" + translatedWord + "', " + helper.FIRST_LETTER + " = '" + originalWord.substring(0).toLowerCase() + "' where " + helper.COLUMN_ID + " = '" + idToDelete + "'");
+        db.close();
+    }
+
+    public void deleteRecord(int idToDelete) {
+        db.execSQL("delete from " + helper.tableName + " where " + helper.COLUMN_ID + " = '" + idToDelete + "'");
+        db.close();
     }
 
     public void makeToast(String input){
