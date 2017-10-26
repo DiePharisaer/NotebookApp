@@ -19,14 +19,12 @@
             android:layout_height="match_parent"
             android:layout_weight="1.77"
             android:orientation="vertical"
-            android:background="@color/colorAccent"
             android:id="@+id/layout_for_text">
 
         </LinearLayout>
 
         <ListView
             android:layout_width="0dp"
-            android:background="@color/colorPrimaryDark"
             android:layout_height="match_parent"
             android:layout_weight="0.23"
             android:id="@+id/listView_for_alphabet">

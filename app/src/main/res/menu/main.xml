@@ -11,4 +11,9 @@
         android:orderInCategory="101"
         android:title="@string/action_signin"
         app:showAsAction="never"/>
+    <item
+        android:id="@+id/delete_db"
+        android:orderInCategory="102"
+        android:title="@string/emptydb"
+        app:showAsAction="never"/>
 </menu>

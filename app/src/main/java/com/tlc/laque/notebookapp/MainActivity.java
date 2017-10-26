@@ -47,6 +47,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 //select corresponding words from db when click on listview
 //delete word from db and update ui
 //use different languages
+//show all words on 1 screen
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, GoogleApiClient.OnConnectionFailedListener {
@@ -78,9 +79,8 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-
         wordsContainer = (LinearLayout) findViewById(R.id.layout_for_text);
+
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -108,10 +108,8 @@ public class MainActivity extends AppCompatActivity
                     public void onClick(DialogInterface dialog, int which) {
                         word1 = input1.getText().toString();
                         word2 = input2.getText().toString();
-
                         insertRecord(word1, word2);
-
-                        updateWordList(word1.substring(0).toLowerCase());
+                        updateWordList((word1.substring(0,1)).toLowerCase());
                     }
                 });
                 builder.setNegativeButton(res.getString(R.string.cancelDialog), new DialogInterface.OnClickListener() {
@@ -156,6 +154,8 @@ public class MainActivity extends AppCompatActivity
         });
 
         updateWordList("a");
+
+        debugDB();
     }
 
     @Override
@@ -192,6 +192,8 @@ public class MainActivity extends AppCompatActivity
             return true;
         }else if (id == R.id.action_signin){
             startSignInProcess();
+        }else if(id == R.id.delete_db){
+            deleteAllRecords();
         }
 
         return super.onOptionsItemSelected(item);
@@ -268,6 +270,33 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        db.close();
+    }
+
+    public void debugDB(){
+        Cursor cursor = db.rawQuery("SELECT * FROM " + helper.tableName, null);
+
+        if(cursor.getCount()>0) {
+            for (int i = 0; i < cursor.getCount(); i++) {
+                cursor.moveToNext();
+                word1 = cursor.getString(cursor.getColumnIndexOrThrow(helper.ORIGINAL_WORD));
+                word2 = cursor.getString(cursor.getColumnIndexOrThrow(helper.TRANSLATED_WORD));
+                int id = cursor.getInt(cursor.getColumnIndexOrThrow(helper.COLUMN_ID));
+                String firstLetter = cursor.getString(cursor.getColumnIndexOrThrow(helper.FIRST_LETTER));
+
+                debug("entry id: " + id);
+                debug("original word: " + word1);
+                debug("translated word: " + word2);
+                debug("first letter: " + firstLetter);
+
+            }
+        }
+        cursor.close();
+    }
+
     public void updateWordList(String selectedLetter){
         wordsContainer.removeAllViews();
 
@@ -287,22 +316,23 @@ public class MainActivity extends AppCompatActivity
         }
 
         cursor.close();
-        db.close();
     }
 
     public void insertRecord(String originalWord, String translatedWord) {
-        db.execSQL("INSERT INTO " + helper.tableName + "(" + helper.ORIGINAL_WORD + "," + helper.TRANSLATED_WORD + "," + helper.FIRST_LETTER + ") VALUES('" + originalWord + "','" + translatedWord + "','" + originalWord.substring(0).toLowerCase() + "')");
-        db.close();
+        db.execSQL("INSERT INTO " + helper.tableName + "(" + helper.ORIGINAL_WORD + "," + helper.TRANSLATED_WORD + "," + helper.FIRST_LETTER + ") VALUES('" + originalWord + "','" + translatedWord + "','" + originalWord.substring(0,1).toLowerCase() + "')");
     }
 
     public void updateRecord(String originalWord, String translatedWord, int idToDelete) {
-        db.execSQL("update " + helper.tableName + " set " + helper.ORIGINAL_WORD + " = '" + originalWord + "', " + helper.TRANSLATED_WORD + " = '" + translatedWord + "', " + helper.FIRST_LETTER + " = '" + originalWord.substring(0).toLowerCase() + "' where " + helper.COLUMN_ID + " = '" + idToDelete + "'");
-        db.close();
+        db.execSQL("update " + helper.tableName + " set " + helper.ORIGINAL_WORD + " = '" + originalWord + "', " + helper.TRANSLATED_WORD + " = '" + translatedWord + "', " + helper.FIRST_LETTER + " = '" + originalWord.substring(0,1).toLowerCase() + "' where " + helper.COLUMN_ID + " = '" + idToDelete + "'");
     }
 
     public void deleteRecord(int idToDelete) {
         db.execSQL("delete from " + helper.tableName + " where " + helper.COLUMN_ID + " = '" + idToDelete + "'");
-        db.close();
+    }
+
+    public void deleteAllRecords(){
+        db.execSQL("delete from " + helper.tableName);
+        updateWordList("a");
     }
 
     public void makeToast(String input){
