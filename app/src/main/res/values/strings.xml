@@ -42,5 +42,6 @@
         <item>X</item>
         <item>Y</item>
         <item>Z</item>
+        <item>#</item>
     </string-array>
 </resources>

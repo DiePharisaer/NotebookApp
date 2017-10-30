@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
 import android.media.Image;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -13,8 +14,12 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutCompat;
+import android.text.InputFilter;
 import android.text.InputType;
+import android.text.Spanned;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -24,6 +29,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -40,14 +46,13 @@ import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 
-//Check that words are only letters
+import java.util.zip.Inflater;
+
 //sign out option
 //import/export csv
-//store new words in db
-//select corresponding words from db when click on listview
 //delete word from db and update ui
 //use different languages
-//show all words on 1 screen
+//alphabetical order
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, GoogleApiClient.OnConnectionFailedListener {
@@ -58,14 +63,15 @@ public class MainActivity extends AppCompatActivity
     GoogleSignInAccount acct;
     Resources res;
     ListView alphabetView;
+    ListView wordsListView;
     Context context;
     LinearLayout wordsContainer;
     String word1;
     String word2;
     private SQLiteDatabase db;
     SQLiteHelper helper;
-
-
+    ArrayAdapter<String> wordListAdapter;
+    ArrayAdapter<String> alphabetAdapter;
 
 
     @Override
@@ -79,7 +85,7 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        wordsContainer = (LinearLayout) findViewById(R.id.layout_for_text);
+//        wordsContainer = (LinearLayout) findViewById(R.id.layout_for_text);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -92,12 +98,34 @@ public class MainActivity extends AppCompatActivity
 
                 final EditText input1 = new EditText(context);
                 input1.setHint(res.getString(R.string.originalWord));
-                input1.setInputType(InputType.TYPE_CLASS_TEXT);
+                input1.setFilters(new InputFilter[] {
+                        new InputFilter() {
+                            @Override
+                            public CharSequence filter(CharSequence cs, int start,
+                                                       int end, Spanned spanned, int dStart, int dEnd) {
+                                if(cs.toString().matches("[a-zA-Z ]+")){
+                                    return cs;
+                                }
+                                return "";
+                            }
+                        }
+                });
 
 
                 final EditText input2 = new EditText(context);
                 input2.setHint(res.getString(R.string.translatedWord));
-                input2.setInputType(InputType.TYPE_CLASS_TEXT);
+                input2.setFilters(new InputFilter[] {
+                        new InputFilter() {
+                            @Override
+                            public CharSequence filter(CharSequence cs, int start,
+                                                       int end, Spanned spanned, int dStart, int dEnd) {
+                                if(cs.toString().matches("[a-zA-Z ]+")){
+                                    return cs;
+                                }
+                                return "";
+                            }
+                        }
+                });
 
                 layout.addView(input1);
                 layout.addView(input2);
@@ -142,7 +170,7 @@ public class MainActivity extends AppCompatActivity
                 .build();
 
 
-        ArrayAdapter<String> alphabetAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, res.getStringArray(R.array.alphabet));
+        alphabetAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, res.getStringArray(R.array.alphabet));
         alphabetView = (ListView) findViewById(R.id.listView_for_alphabet);
         alphabetView.setAdapter(alphabetAdapter);
 
@@ -150,6 +178,92 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 updateWordList(((TextView) view).getText().toString().toLowerCase());
+            }
+        });
+
+        wordListAdapter = new ArrayAdapter<>(this, R.layout.row_container);
+        wordsListView = (ListView) findViewById(R.id.listView_for_words);
+        wordsListView.setAdapter(wordListAdapter);
+
+        wordsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String fullString = ((TextView) view).getText().toString();
+                String[] parts = fullString.split("-->");
+                final String firstWord = parts[0];
+                final String secondWord = parts[1];
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setTitle("Edit a word pair");
+                LinearLayout layout = new LinearLayout(context);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                final EditText input1 = new EditText(context);
+                input1.setText(firstWord.toLowerCase());
+                input1.setHint(res.getString(R.string.originalWord));
+                input1.setFilters(new InputFilter[] {
+                        new InputFilter() {
+                            @Override
+                            public CharSequence filter(CharSequence cs, int start,
+                                                       int end, Spanned spanned, int dStart, int dEnd) {
+                                if(cs.toString().matches("[a-zA-Z ]+")){
+                                    return cs;
+                                }
+                                return "";
+                            }
+                        }
+                });
+
+
+                final EditText input2 = new EditText(context);
+                input2.setText(secondWord.toLowerCase());
+                input2.setHint(res.getString(R.string.translatedWord));
+                input2.setFilters(new InputFilter[] {
+                        new InputFilter() {
+                            @Override
+                            public CharSequence filter(CharSequence cs, int start,
+                                                       int end, Spanned spanned, int dStart, int dEnd) {
+                                if(cs.toString().matches("[a-zA-Z ]+")){
+                                    return cs;
+                                }
+                                return "";
+                            }
+                        }
+                });
+
+                layout.addView(input1);
+                layout.addView(input2);
+                builder.setView(layout);
+
+                builder.setPositiveButton(res.getString(R.string.addDialog), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        word1 = input1.getText().toString();
+                        word2 = input2.getText().toString();
+                        updateRecord(word1, word2, findWordPosition(firstWord));
+                        updateWordList((word1.substring(0,1)).toLowerCase());
+                    }
+                });
+                builder.setNegativeButton(res.getString(R.string.cancelDialog), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+                builder.show();
+            }
+        });
+
+        wordsListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                String fullString = ((TextView) view).getText().toString();
+                String[] parts = fullString.split("-->");
+                final String firstWord = parts[0];
+                final String secondWord = parts[1];
+
+                deleteRecord(findWordPosition(firstWord));
+                return false;
             }
         });
 
@@ -298,21 +412,30 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void updateWordList(String selectedLetter){
-        wordsContainer.removeAllViews();
+        wordsListView.setAdapter(null);
 
-        Cursor cursor = db.rawQuery("SELECT * FROM " + helper.tableName + " WHERE " + helper.FIRST_LETTER + " = '" + selectedLetter + "'", null);
+        Cursor cursor;
+
+        if(selectedLetter.equals("#"))
+            cursor = db.rawQuery("SELECT * FROM " + helper.tableName, null);
+        else
+            cursor = db.rawQuery("SELECT * FROM " + helper.tableName + " WHERE " + helper.FIRST_LETTER + " = '" + selectedLetter + "'", null);
 
         //cycle and add the textviews
         if(cursor.getCount()>0) {
+            String[] rowStringArray = new String[cursor.getCount()];
+
             for (int i = 0; i < cursor.getCount(); i++) {
                 cursor.moveToNext();
                 word1 = cursor.getString(cursor.getColumnIndexOrThrow(helper.ORIGINAL_WORD));
                 word2 = cursor.getString(cursor.getColumnIndexOrThrow(helper.TRANSLATED_WORD));
 
-                TextView newWord = new TextView(context);
-                newWord.setText(word1 + " " + res.getString(R.string.arrow) + " " + word2);
-                wordsContainer.addView(newWord);
+                rowStringArray[i] = word1 + "-->" + word2;
             }
+
+            wordListAdapter = new ArrayAdapter<>(this, R.layout.row_container, rowStringArray);
+            wordsListView.setAdapter(wordListAdapter);
+            wordListAdapter.notifyDataSetChanged();
         }
 
         cursor.close();
@@ -333,6 +456,17 @@ public class MainActivity extends AppCompatActivity
     public void deleteAllRecords(){
         db.execSQL("delete from " + helper.tableName);
         updateWordList("a");
+    }
+
+    public int findWordPosition(String word){
+        Cursor cursor;
+        cursor = db.rawQuery("SELECT * FROM " + helper.tableName + " WHERE " + helper.ORIGINAL_WORD + " = '" + word + "'", null);
+        if(cursor.getCount()>0)
+            cursor.moveToFirst();
+
+        int idPos = cursor.getInt(cursor.getColumnIndexOrThrow(helper.COLUMN_ID));
+        cursor.close();
+        return idPos;
     }
 
     public void makeToast(String input){
