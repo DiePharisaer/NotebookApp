@@ -36,6 +36,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="0.23"
+            android:choiceMode="singleChoice"
             android:id="@+id/listView_for_alphabet">
 
         </ListView>

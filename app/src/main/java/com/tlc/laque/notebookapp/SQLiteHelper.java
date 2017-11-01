@@ -2,6 +2,7 @@ package com.tlc.laque.notebookapp;
 
 
 import android.content.Context;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 

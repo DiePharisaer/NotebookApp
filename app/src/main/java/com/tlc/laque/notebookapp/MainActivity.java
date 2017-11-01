@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.media.Image;
@@ -18,6 +19,7 @@ import android.text.InputFilter;
 import android.text.InputType;
 import android.text.Spanned;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -46,13 +48,14 @@ import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 
-import java.util.zip.Inflater;
-
+//TODO
 //sign out option
 //import/export csv
-//delete word from db and update ui
-//use different languages
 //alphabetical order
+//Exam mode
+// textToSpeech
+//SpeechToText
+// save last letter for when close app, delete something, change orientation
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, GoogleApiClient.OnConnectionFailedListener {
@@ -136,8 +139,13 @@ public class MainActivity extends AppCompatActivity
                     public void onClick(DialogInterface dialog, int which) {
                         word1 = input1.getText().toString();
                         word2 = input2.getText().toString();
-                        insertRecord(word1, word2);
-                        updateWordList((word1.substring(0,1)).toLowerCase());
+
+                        if(!existsInDb(word1)) {
+                            insertRecord(word1, word2);
+                            updateWordList((word1.substring(0, 1)).toLowerCase());
+                        }else{
+                            makeToast("This word exists already!");
+                        }
                     }
                 });
                 builder.setNegativeButton(res.getString(R.string.cancelDialog), new DialogInterface.OnClickListener() {
@@ -178,6 +186,13 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 updateWordList(((TextView) view).getText().toString().toLowerCase());
+//                TypedValue typedValue = new TypedValue();
+//                getTheme().resolveAttribute(R.attr.colorAccent, typedValue, true);
+//                int color = typedValue.data;
+//                view.setBackgroundColor(color);
+//
+//                ((TextView) view).setTextColor(Color.WHITE);
+                debug((res.getStringArray(R.array.alphabet)[parent.getPositionForView(view)]).toLowerCase());
             }
         });
 
@@ -263,6 +278,7 @@ public class MainActivity extends AppCompatActivity
                 final String secondWord = parts[1];
 
                 deleteRecord(findWordPosition(firstWord));
+                updateWordList("a"); //TODO update with last letter
                 return false;
             }
         });
@@ -441,6 +457,8 @@ public class MainActivity extends AppCompatActivity
         cursor.close();
     }
 
+
+
     public void insertRecord(String originalWord, String translatedWord) {
         db.execSQL("INSERT INTO " + helper.tableName + "(" + helper.ORIGINAL_WORD + "," + helper.TRANSLATED_WORD + "," + helper.FIRST_LETTER + ") VALUES('" + originalWord + "','" + translatedWord + "','" + originalWord.substring(0,1).toLowerCase() + "')");
     }
@@ -467,6 +485,20 @@ public class MainActivity extends AppCompatActivity
         int idPos = cursor.getInt(cursor.getColumnIndexOrThrow(helper.COLUMN_ID));
         cursor.close();
         return idPos;
+    }
+
+    public boolean existsInDb(String wordToCheck){
+        Cursor cursor;
+        boolean existsRepeat;
+        cursor = db.rawQuery("SELECT * FROM " + helper.tableName + " WHERE " + helper.ORIGINAL_WORD + " = '" + wordToCheck + "'", null);
+        if(cursor.getCount()>0)
+            existsRepeat = true;
+        else
+            existsRepeat = false;
+
+        cursor.close();
+
+        return existsRepeat;
     }
 
     public void makeToast(String input){
