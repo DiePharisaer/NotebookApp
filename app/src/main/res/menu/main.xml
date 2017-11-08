@@ -16,4 +16,9 @@
         android:orderInCategory="102"
         android:title="@string/emptydb"
         app:showAsAction="never"/>
+    <item
+        android:id="@+id/exam_mode"
+        android:orderInCategory="103"
+        android:title="@string/exammode"
+        app:showAsAction="never"/>
 </menu>

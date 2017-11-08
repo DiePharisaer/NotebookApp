@@ -324,6 +324,9 @@ public class MainActivity extends AppCompatActivity
             startSignInProcess();
         }else if(id == R.id.delete_db){
             deleteAllRecords();
+        }else if(id == R.id.exam_mode){
+            Intent intent = new Intent(MainActivity.this, ExamModeActivity.class);
+            startActivity(intent);
         }
 
         return super.onOptionsItemSelected(item);

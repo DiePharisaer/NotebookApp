@@ -15,6 +15,22 @@
     <string name="translatedWord">Translated Word</string>
     <string name="arrow">--></string>
     <string name="emptydb">Empty DB</string>
+    <string name="exammode">Exam Mode</string>
+    <string name="examModeWelcome">Welcome to the Exam Mode! In this section you will be able to test your knowledge on th words you introduced in the notebook. Make sure you add some to get started!</string>
+    <string name="noWordsExam">No words found! Make sure you add some words from the home screen fab, and then come back and test yourself!</string>
+    <string name="exit">Exit</string>
+    <string name="start">Start</string>
+    <string name="next">Next</string>
+    <string name="newTest">New Test</string>
+    <string name="clickStart">Click \'Start\' to begin the test!</string>
+    <string name="congrats">Congratulations! You have completed the test. Your results were</string>
+    <string name="impeccable">impeccable</string> //  100%
+    <string name="excellent">excellent</string> //90-99%
+    <string name="good">good</string> // 75-89%
+    <string name="satisfactory">satisfactory</string> //60-74%
+    <string name="bad">bad</string> //0-59%
+
+
 
     <string-array name="alphabet">
         <item>A</item>
