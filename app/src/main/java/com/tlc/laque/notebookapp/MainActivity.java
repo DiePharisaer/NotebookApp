@@ -278,7 +278,7 @@ public class MainActivity extends AppCompatActivity
                 final String secondWord = parts[1];
 
                 deleteRecord(findWordPosition(firstWord));
-                updateWordList("a"); //TODO update with last letter
+                updateWordList((parts[0].substring(0,1)).toLowerCase()); //TODO update with last letter
                 return false;
             }
         });

@@ -14,9 +14,10 @@
         android:layout_weight="0.4"
         android:gravity="center">
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
+            android:layout_margin="15dp"
             android:id="@+id/titleExamView"
             android:text="title of screen"
             android:padding="5dp"/>
@@ -25,17 +26,67 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:id="@+id/questionsExamLayout"
-        android:layout_weight="2.4"
+        android:orientation="horizontal"
+        android:id="@+id/wordExam"
+        android:layout_weight="0.4"
         android:gravity="center">
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="questions"
-            android:padding="15dp"
-            android:id="@+id/questionsExamView"
-            android:gravity="center"/>
+            android:gravity="center"
+            android:layout_margin="10dp"
+            android:id="@+id/wordExamView"
+            android:text="word"
+            android:textStyle="bold"
+            android:padding="5dp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:id="@+id/questionsExamLayout"
+        android:layout_weight="2.0"
+        android:gravity="center">
+
+        <RadioGroup
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/radioGroupQuestions"
+            android:gravity="center">
+            <RadioButton
+                android:gravity="center"
+                android:layout_margin="10dp"
+                android:id="@+id/answer1"
+                android:text="@string/answer1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+            </RadioButton>
+            <RadioButton
+                android:gravity="center"
+                android:layout_margin="10dp"
+                android:id="@+id/answer2"
+                android:text="@string/answer4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+            </RadioButton>
+            <RadioButton
+                android:gravity="center"
+                android:layout_margin="10dp"
+                android:id="@+id/answer3"
+                android:text="@string/answer3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+            </RadioButton>
+            <RadioButton
+                android:gravity="center"
+                android:layout_margin="10dp"
+                android:id="@+id/answer4"
+                android:text="@string/answer4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+            </RadioButton>
+        </RadioGroup>
     </LinearLayout>
 
     <LinearLayout

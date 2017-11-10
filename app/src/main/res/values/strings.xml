@@ -17,7 +17,7 @@
     <string name="emptydb">Empty DB</string>
     <string name="exammode">Exam Mode</string>
     <string name="examModeWelcome">Welcome to the Exam Mode! In this section you will be able to test your knowledge on th words you introduced in the notebook. Make sure you add some to get started!</string>
-    <string name="noWordsExam">No words found! Make sure you add some words from the home screen fab, and then come back and test yourself!</string>
+    <string name="noWordsExam">Not enough words found! Make sure you add at least 4 words from the home screen fab, and then come back and test yourself!</string>
     <string name="exit">Exit</string>
     <string name="start">Start</string>
     <string name="next">Next</string>
@@ -29,6 +29,12 @@
     <string name="good">good</string> // 75-89%
     <string name="satisfactory">satisfactory</string> //60-74%
     <string name="bad">bad</string> //0-59%
+    <string name="answer1">Answer 1</string>
+    <string name="answer2">Answer 2</string>
+    <string name="answer3">Answer 3</string>
+    <string name="answer4">Answer 4</string>
+    <string name="noAnswerSelected">Please select an answer first!</string>
+
 
 
 
