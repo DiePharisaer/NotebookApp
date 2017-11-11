@@ -1,20 +1,26 @@
 package com.tlc.laque.notebookapp;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.media.Image;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.SyncStateContract;
+import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutCompat;
 import android.text.InputFilter;
@@ -22,6 +28,7 @@ import android.text.InputType;
 import android.text.Spanned;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.DragEvent;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -55,6 +62,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Locale;
 import java.util.TimeZone;
 
 //TODO
@@ -72,8 +82,7 @@ import java.util.TimeZone;
 //sign out option
 // save last letter for when close app, delete something, change orientation
 
-public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, GoogleApiClient.OnConnectionFailedListener {
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, GoogleApiClient.OnConnectionFailedListener {
 
     GoogleApiClient mGoogleApiClient;
     String DEBUG = "DEBUG";
@@ -82,6 +91,7 @@ public class MainActivity extends AppCompatActivity
     Resources res;
     ListView alphabetView;
     ListView wordsListView;
+    ListView wordsListItemsView;
     Context context;
     LinearLayout wordsContainer;
     String word1;
@@ -89,8 +99,13 @@ public class MainActivity extends AppCompatActivity
     private SQLiteDatabase db;
     SQLiteHelper helper;
     ArrayAdapter<String> wordListAdapter;
+    ArrayAdapter<String> wordListAdapterItems;  
     ArrayAdapter<String> alphabetAdapter;
-
+    TextToSpeech tts;
+    TextToSpeech myTTS;
+    int CHECK_CODE = 0101;
+    String wordToSpeech;
+    TextToSpeech.OnInitListener initListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -170,6 +185,9 @@ public class MainActivity extends AppCompatActivity
                     }
                 });
                 builder.show();
+
+
+
             }
         });
 
@@ -298,9 +316,41 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        updateWordList("a");
+        wordListAdapterItems = new ArrayAdapter<>(this, R.layout.row_container);
+        wordsListItemsView = (ListView) findViewById(R.id.listView_for_words2);
+        wordsListItemsView.setAdapter(wordListAdapterItems);
 
-        debugDB();
+        wordsListItemsView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String fullString = ((TextView)(wordsListView.getChildAt(position))).getText().toString();
+                String[] parts = fullString.split("-->");
+                String firstWord = parts[0];
+
+                wordToSpeech = firstWord;
+
+                sendIntentTTS();
+            }
+        });
+
+        wordsListItemsView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                String fullString = ((TextView)(wordsListView.getChildAt(position))).getText().toString();
+                String[] parts = fullString.split("-->");
+                String secondWord = parts[1];
+
+                wordToSpeech = secondWord;
+
+                sendIntentTTS();
+                return false;
+            }
+        });
+
+
+
+        updateWordList("a");
+        textToSpeech();
     }
 
     @Override
@@ -345,7 +395,7 @@ public class MainActivity extends AppCompatActivity
         }else if(id == R.id.importCSV){
             importCSV();
         }else if(id == R.id.exportCSV){
-            exportCSV();
+            checkForWritePermission();
         }
 
         return super.onOptionsItemSelected(item);
@@ -389,6 +439,22 @@ public class MainActivity extends AppCompatActivity
         if (requestCode == RC_SIGN_IN) {
             GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
             handleSignInResult(result);
+        }else if(requestCode == CHECK_CODE){
+            debug("intent arrived");
+            if (resultCode == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS) {
+                // the user has the necessary data - create the TTS
+                debug("can speakdebug");
+
+
+                tts.speak(wordToSpeech, TextToSpeech.QUEUE_FLUSH, null,null);
+            } else {
+                // no data - install it now
+                Intent installTTSIntent = new Intent();
+                installTTSIntent
+                        .setAction(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
+                startActivity(installTTSIntent);
+            }
+
         }
     }
 
@@ -424,6 +490,11 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onDestroy() {
+        if (tts != null) {
+                tts.stop();
+                tts.shutdown();
+            }
+
         super.onDestroy();
         db.close();
     }
@@ -451,6 +522,7 @@ public class MainActivity extends AppCompatActivity
 
     public void updateWordList(String selectedLetter){
         wordsListView.setAdapter(null);
+        wordsListItemsView.setAdapter(null);
 
         Cursor cursor;
 
@@ -462,6 +534,7 @@ public class MainActivity extends AppCompatActivity
         //cycle and add the textviews
         if(cursor.getCount()>0) {
             String[] rowStringArray = new String[cursor.getCount()];
+            String[] rowStringArrayItems = new String[cursor.getCount()];
 
             for (int i = 0; i < cursor.getCount(); i++) {
                 cursor.moveToNext();
@@ -469,11 +542,16 @@ public class MainActivity extends AppCompatActivity
                 word2 = cursor.getString(cursor.getColumnIndexOrThrow(helper.TRANSLATED_WORD));
 
                 rowStringArray[i] = word1 + "-->" + word2;
+                rowStringArrayItems[i] = res.getString(R.string.S);
             }
 
             wordListAdapter = new ArrayAdapter<>(this, R.layout.row_container, rowStringArray);
             wordsListView.setAdapter(wordListAdapter);
             wordListAdapter.notifyDataSetChanged();
+
+            wordListAdapterItems = new ArrayAdapter<>(this, R.layout.row_container, rowStringArrayItems);
+            wordsListItemsView.setAdapter(wordListAdapterItems);
+            wordsListItemsView.deferNotifyDataSetChanged();
         }
 
         cursor.close();
@@ -523,78 +601,167 @@ public class MainActivity extends AppCompatActivity
         return existsRepeat;
     }
 
-//    public void importCSV() {
-//        File exportDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-//        String line = "";
-//        try {
-//            FileReader file = new FileReader(exportDir + "/csvToImport.csv");
-//            BufferedReader buffer = new BufferedReader(file);
-//            dbHelper.getWritableDatabase().execSQL("DELETE FROM timesdb");
-//
-//            //TODO use a transaction to speed this up by ~1000x
-//            while ((line = buffer.readLine()) != null) {
-//                String[] str = line.split(",");
-//                dbHelper.getWritableDatabase().execSQL("INSERT INTO timesdb (start, end, activity, business, startedby) VALUES (" + str[1] + ", " + str[2] + ", '" + str[0] + "', " + str[3] + ", '"
-//                        + SyncStateContract.Constants.IMPORTED + "') ");
-//            }
-//        } catch (Exception exc) {
-//            debug(exc);
-//        }
-//    }
-//
-//    public boolean exportCSV() {
-//        String state = Environment.getExternalStorageState();
-//        debug("1");
-//        if (!Environment.MEDIA_MOUNTED.equals(state)) {
-//            debug("2");
-//            return false;
-//        } else {
-//            debug("3");
-//
-//            File exportDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-//            if (!exportDir.exists()) {
-//                debug("4");
-//                exportDir.mkdirs();
-//            }
-//            File file;
-//            PrintWriter printWriter = null;
-//            debug("5");
-//            try {
-//                debug("6");
-//
-//                file = new File(exportDir, "TimesUpDatabase.csv");
-//                printWriter = new PrintWriter(new FileWriter(file));
-//                Cursor timesDbCursor = dbHelper.getReadableDatabase().query("timesdb", new String[]{"end", "start", "activity", "business"}, "business = " + businessVal, null, null, null, "start");
-//                printWriter.println("ACTIVITY,START,END");
-//                timesDbCursor.moveToFirst();
-//                TimeZone tz = TimeZone.getDefault();
-//                for (int i = 0; i < timesDbCursor.getCount(); i++) {
-//                    long start = timesDbCursor.getLong(Constants.COLUMN_START_MAIN);
-//                    start -= tz.getOffset(start);
-//                    long end = timesDbCursor.getLong(Constants.COLUMN_END_MAIN);
-//                    end -= tz.getOffset(end);
-//                    int activity = timesDbCursor.getInt(Constants.COLUMN_ACT_MAIN);
-//                    String activityName = iconsHelper.getName(activity);
-//                    String record;
-//                    record = (activityName + "," + new Date(start) + "," + new Date(end));
-//                    printWriter.println(record);
-//
-//                    if (!timesDbCursor.isLast())
-//                        timesDbCursor.moveToNext();
-//                }
-//                timesDbCursor.close();
-//            } catch (Exception exc) {
-//                debug("7");
-//                debug(exc.toString());
-//                return false;
-//            } finally {
-//                debug("8");
-//                if (printWriter != null) printWriter.close();
-//            }
-//            debug("9");
-//            return true;
-//        }
-//    }
+    public void importCSV() {
+        File exportDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        String line = "";
+        debug("method");
+        try {
+            FileReader file = new FileReader(exportDir + "/NotebookDatabase.csv");
+            BufferedReader buffer = new BufferedReader(file);
+            debug("try");
+            while ((line = buffer.readLine()) != null) {
+                String[] str = line.split(",");
+                debug("str " + str);
+
+                insertRecord(str[0] ,str[1]);
+            }
+        } catch (Exception exc) {
+            debug(exc);
+        }
+
+        updateWordList("#");
+    }
+
+    public boolean exportCSV() {
+        String state = Environment.getExternalStorageState();
+        debug("1");
+        if (!Environment.MEDIA_MOUNTED.equals(state)) {
+            debug("2");
+            return false;
+        } else {
+            debug("3");
+
+            File exportDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            if (!exportDir.exists()) {
+                debug("4");
+                exportDir.mkdirs();
+            }
+            File file;
+            PrintWriter printWriter = null;
+            debug("5");
+            try {
+                debug("6");
+
+                file = new File(exportDir, "NotebookDatabase.csv");
+                printWriter = new PrintWriter(new FileWriter(file));
+                Cursor cursor = db.rawQuery("SELECT * FROM " + helper.tableName, null);
+                printWriter.println("ORIGINAL WORD,TRANSLATED WORD");
+                if (cursor.getCount() < 1)
+                        return false;
+
+                cursor.moveToFirst();
+                for (int i = 0; i < cursor.getCount(); i++) {
+                    String orgWord = cursor.getString(cursor.getColumnIndexOrThrow(helper.ORIGINAL_WORD));
+                    String transWord = cursor.getString(cursor.getColumnIndexOrThrow(helper.TRANSLATED_WORD));
+                    String record;
+                    record = (orgWord + "," + transWord);
+                    printWriter.println(record);
+
+                    if (!cursor.isLast())
+                        cursor.moveToNext();
+                }
+                cursor.close();
+            } catch (Exception exc) {
+                debug("7");
+                debug(exc.toString());
+                return false;
+            } finally {
+                debug("8");
+                if (printWriter != null) printWriter.close();
+            }
+            debug("9");
+            return true;
+        }
+    }
+
+
+
+    @TargetApi(Build.VERSION_CODES.M)
+    public void checkForWritePermission(){
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+            final boolean writeGranted = ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+            if(writeGranted){ //Already have both necessary permissions
+                if (exportCSV()) {
+                    makeToast(res.getString(R.string.exportSucc));
+                } else
+                    makeToast(res.getString(R.string.exportFail));
+                return;
+            }else{ //ask for permission
+                boolean alreadyAskedForPermission  = shouldShowRequestPermissionRationale(android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                if(alreadyAskedForPermission){
+                    requestLocPermissions(writeGranted);
+                }else {
+                    requestLocPermissions(writeGranted);
+                }
+            }
+        }else{
+            if (exportCSV()) {
+                makeToast(res.getString(R.string.exportSucc));
+            } else
+                makeToast(res.getString(R.string.exportFail));
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.M)
+    public void requestLocPermissions(boolean writeGranted){
+        ArrayList<String> permissions = new ArrayList<>();
+        if (!writeGranted)
+            permissions.add(android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        requestPermissions(permissions.toArray(new String[permissions.size()]), 1);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 1) {
+            boolean permsGranted = true;
+            for (int i = 0; i < grantResults.length; i++)
+                permsGranted = permsGranted && (grantResults[i] == PackageManager.PERMISSION_GRANTED);
+            if (permsGranted) {
+                if (exportCSV()) {
+                    makeToast(res.getString(R.string.exportSucc));
+                } else
+                    makeToast(res.getString(R.string.exportFail));
+                return;
+            } else {
+                makeToast(res.getString(R.string.exportFail));
+                return;
+            }
+        }
+    }
+
+    public void textToSpeech(){
+        debug("text to speech");
+
+        initListener = new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                debug("onInit in listener");
+                if (status == TextToSpeech.SUCCESS) {
+                    debug("success");
+                    int result = tts.setLanguage(Locale.US);
+                    if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        Log.e("TTS", "This Language is not supported");
+                    }
+
+                } else {
+                    debug("error");
+
+                    Log.e("TTS", "Initilization Failed!");
+                }
+            }
+        };
+
+        tts = new TextToSpeech(this, initListener);
+
+        debug("after initlistener");
+    }
+
+    public void sendIntentTTS(){
+        Intent checkTTSIntent = new Intent();
+        checkTTSIntent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
+        startActivityForResult(checkTTSIntent, CHECK_CODE);
+    }
 
     public void makeToast(String input){
         Toast toast = Toast.makeText(context, input, Toast.LENGTH_SHORT);

@@ -37,6 +37,11 @@
     <string name="noAnswerSelected">Please select an answer first!</string>
     <string name="importCSV">Import CSV</string>
     <string name="exportCSV">Export CSV</string>
+    <string name="exportSucc">Export successful</string>
+    <string name="exportFail">Export failed</string>
+    <string name="importFail">Import failed</string>
+    <string name="importSucc">Import successful</string>
+    <string name="S">S</string>
 
 
 

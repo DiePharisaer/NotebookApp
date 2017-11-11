@@ -24,11 +24,19 @@
 
             <ListView
                 android:layout_width="0dp"
-                android:layout_weight="1.77"
+                android:layout_weight="1.54"
                 android:layout_height="match_parent"
                 android:id="@+id/listView_for_words">
 
             </ListView>
+
+        <ListView
+            android:layout_width="0dp"
+            android:layout_weight="0.23"
+            android:layout_height="match_parent"
+            android:id="@+id/listView_for_words2">
+
+        </ListView>
 
         <!--</LinearLayout>-->
 
