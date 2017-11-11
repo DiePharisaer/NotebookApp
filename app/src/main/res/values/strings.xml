@@ -23,6 +23,7 @@
     <string name="next">Next</string>
     <string name="newTest">New Test</string>
     <string name="clickStart">Click \'Start\' to begin the test!</string>
+    <string name="clickNext">Select an answer and click \'Next\'</string>
     <string name="congrats">Congratulations! You have completed the test. Your results were</string>
     <string name="impeccable">impeccable</string> //  100%
     <string name="excellent">excellent</string> //90-99%
@@ -34,6 +35,8 @@
     <string name="answer3">Answer 3</string>
     <string name="answer4">Answer 4</string>
     <string name="noAnswerSelected">Please select an answer first!</string>
+    <string name="importCSV">Import CSV</string>
+    <string name="exportCSV">Export CSV</string>
 
 
 

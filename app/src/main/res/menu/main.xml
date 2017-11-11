@@ -21,4 +21,14 @@
         android:orderInCategory="103"
         android:title="@string/exammode"
         app:showAsAction="never"/>
+    <item
+        android:id="@+id/importCSV"
+        android:orderInCategory="104"
+        android:title="@string/importCSV"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/exportCSV"
+        android:orderInCategory="105"
+        android:title="@string/exportCSV"
+        app:showAsAction="never"/>
 </menu>

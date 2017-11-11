@@ -10,6 +10,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.media.Image;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.SyncStateContract;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -48,13 +50,26 @@ import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.TimeZone;
+
 //TODO
-//sign out option
+//domain
 //import/export csv
+//textToSpeech
+//
+
+// Extra exam: Animations between transitions, fade in, fade out
+// Extra exam: Store results and show best in settings list
+// Extra exam: choose number of questions with a number selector
+
 //alphabetical order
-//Exam mode
-// textToSpeech
 //SpeechToText
+//sign out option
 // save last letter for when close app, delete something, change orientation
 
 public class MainActivity extends AppCompatActivity
@@ -327,6 +342,10 @@ public class MainActivity extends AppCompatActivity
         }else if(id == R.id.exam_mode){
             Intent intent = new Intent(MainActivity.this, ExamModeActivity.class);
             startActivity(intent);
+        }else if(id == R.id.importCSV){
+            importCSV();
+        }else if(id == R.id.exportCSV){
+            exportCSV();
         }
 
         return super.onOptionsItemSelected(item);
@@ -503,6 +522,79 @@ public class MainActivity extends AppCompatActivity
 
         return existsRepeat;
     }
+
+//    public void importCSV() {
+//        File exportDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+//        String line = "";
+//        try {
+//            FileReader file = new FileReader(exportDir + "/csvToImport.csv");
+//            BufferedReader buffer = new BufferedReader(file);
+//            dbHelper.getWritableDatabase().execSQL("DELETE FROM timesdb");
+//
+//            //TODO use a transaction to speed this up by ~1000x
+//            while ((line = buffer.readLine()) != null) {
+//                String[] str = line.split(",");
+//                dbHelper.getWritableDatabase().execSQL("INSERT INTO timesdb (start, end, activity, business, startedby) VALUES (" + str[1] + ", " + str[2] + ", '" + str[0] + "', " + str[3] + ", '"
+//                        + SyncStateContract.Constants.IMPORTED + "') ");
+//            }
+//        } catch (Exception exc) {
+//            debug(exc);
+//        }
+//    }
+//
+//    public boolean exportCSV() {
+//        String state = Environment.getExternalStorageState();
+//        debug("1");
+//        if (!Environment.MEDIA_MOUNTED.equals(state)) {
+//            debug("2");
+//            return false;
+//        } else {
+//            debug("3");
+//
+//            File exportDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+//            if (!exportDir.exists()) {
+//                debug("4");
+//                exportDir.mkdirs();
+//            }
+//            File file;
+//            PrintWriter printWriter = null;
+//            debug("5");
+//            try {
+//                debug("6");
+//
+//                file = new File(exportDir, "TimesUpDatabase.csv");
+//                printWriter = new PrintWriter(new FileWriter(file));
+//                Cursor timesDbCursor = dbHelper.getReadableDatabase().query("timesdb", new String[]{"end", "start", "activity", "business"}, "business = " + businessVal, null, null, null, "start");
+//                printWriter.println("ACTIVITY,START,END");
+//                timesDbCursor.moveToFirst();
+//                TimeZone tz = TimeZone.getDefault();
+//                for (int i = 0; i < timesDbCursor.getCount(); i++) {
+//                    long start = timesDbCursor.getLong(Constants.COLUMN_START_MAIN);
+//                    start -= tz.getOffset(start);
+//                    long end = timesDbCursor.getLong(Constants.COLUMN_END_MAIN);
+//                    end -= tz.getOffset(end);
+//                    int activity = timesDbCursor.getInt(Constants.COLUMN_ACT_MAIN);
+//                    String activityName = iconsHelper.getName(activity);
+//                    String record;
+//                    record = (activityName + "," + new Date(start) + "," + new Date(end));
+//                    printWriter.println(record);
+//
+//                    if (!timesDbCursor.isLast())
+//                        timesDbCursor.moveToNext();
+//                }
+//                timesDbCursor.close();
+//            } catch (Exception exc) {
+//                debug("7");
+//                debug(exc.toString());
+//                return false;
+//            } finally {
+//                debug("8");
+//                if (printWriter != null) printWriter.close();
+//            }
+//            debug("9");
+//            return true;
+//        }
+//    }
 
     public void makeToast(String input){
         Toast toast = Toast.makeText(context, input, Toast.LENGTH_SHORT);

@@ -1,24 +1,25 @@
 package com.tlc.laque.notebookapp;
 
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.support.annotation.IdRes;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Random;
 
 
@@ -29,18 +30,25 @@ public class ExamModeActivity extends AppCompatActivity {
     Context context;
     Resources res;
     RadioGroup radioGroup;
+    RadioButton radio1;
+    RadioButton radio2;
+    RadioButton radio3;
+    RadioButton radio4;
 
     String DEBUG = "DEBUG";
     Button exitButton;
     Button nextButton;
     TextView title;
+    TextView message;
     int[] providedAnswersArray;
-    int[] correctAnswersArray;
-    int questionNumber;
     ArrayList wordsShownArrayList;
     ArrayList wordsIndexShownArrayList;
     int numMultipleChoiceAns = 4;
-    int[] wordsAnsweredIndex;
+    int currentQuestion = -1;
+    String[] wordsPickedToAsk;
+    int numberOfQuestions;
+    int[] wordsPickedIndex;
+    int testDone = 0;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -56,6 +64,10 @@ public class ExamModeActivity extends AppCompatActivity {
         title.setText(res.getString(R.string.examModeWelcome));
 
         radioGroup = (RadioGroup) findViewById(R.id.radioGroupQuestions);
+        radio1 = (RadioButton) findViewById(R.id.answer1);
+        radio2 = (RadioButton) findViewById(R.id.answer2);
+        radio3 = (RadioButton) findViewById(R.id.answer3);
+        radio4 = (RadioButton) findViewById(R.id.answer4);
 
         exitButton = (Button) findViewById(R.id.buttonExamNegative);
         exitButton.setOnClickListener(new View.OnClickListener() {
@@ -70,20 +82,61 @@ public class ExamModeActivity extends AppCompatActivity {
         nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(radioGroup.getCheckedRadioButtonId() == -1)
-                    makeToast(res.getString(R.string.noAnswerSelected));
-                else {
-                    if(radioGroup.getCheckedRadioButtonId() == R.id.answer1){
-                        nextQuestion(1, 0);
-                    }else if(radioGroup.getCheckedRadioButtonId() == R.id.answer2){
-                        nextQuestion(2,0);
-                    }else if(radioGroup.getCheckedRadioButtonId() == R.id.answer3){
-                        nextQuestion(3,0);
-                    }else if(radioGroup.getCheckedRadioButtonId() == R.id.answer4){
-                        nextQuestion(4,0);
-                    }
+                currentQuestion++;
 
+                if(testDone == 1) {
+                    recreate();
+                    radioGroup.clearCheck();
+                    return;
                 }
+
+                if (radioGroup.getVisibility() == View.GONE) {
+                    radioGroup.setVisibility(View.VISIBLE);
+
+                    message.setText(wordsPickedToAsk[currentQuestion]);
+                    title.setText(res.getString(R.string.clickNext));
+                    nextButton.setText(res.getString(R.string.next));
+                    radio1.setText((String)(((ArrayList)(wordsShownArrayList.get(currentQuestion))).get(0)));
+                    radio2.setText((String)(((ArrayList)(wordsShownArrayList.get(currentQuestion))).get(1)));
+                    radio3.setText((String)(((ArrayList)(wordsShownArrayList.get(currentQuestion))).get(2)));
+                    radio4.setText((String)(((ArrayList)(wordsShownArrayList.get(currentQuestion))).get(3)));
+                } else if(currentQuestion > numberOfQuestions){
+                    testDone = 1;
+                    radioGroup.setVisibility(View.GONE);
+
+                    double result = calcuateResults();
+                    message.setText(String.valueOf(result) + "%");
+                    nextButton.setText(res.getString(R.string.newTest));
+                    if(result < 60)
+                        title.setText(res.getString(R.string.congrats) + " " + res.getString(R.string.bad));
+                    else if(result < 75)
+                        title.setText(res.getString(R.string.congrats) + " " + res.getString(R.string.satisfactory));
+                    else if(result < 90)
+                        title.setText(res.getString(R.string.congrats) + " " + res.getString(R.string.good));
+                    else if(result < 99)
+                        title.setText(res.getString(R.string.congrats) + " " + res.getString(R.string.excellent));
+                    else
+                        title.setText(res.getString(R.string.congrats) + " " + res.getString(R.string.impeccable));
+                    return;
+                } else {
+
+                    if (radioGroup.getCheckedRadioButtonId() == -1) {
+                        makeToast(res.getString(R.string.noAnswerSelected));
+                        currentQuestion--;
+                    }else {
+
+                        if (radioGroup.getCheckedRadioButtonId() == R.id.answer1) {
+                            nextQuestion(0, currentQuestion);
+                        } else if (radioGroup.getCheckedRadioButtonId() == R.id.answer2) {
+                            nextQuestion(1, currentQuestion);
+                        } else if (radioGroup.getCheckedRadioButtonId() == R.id.answer3) {
+                            nextQuestion(2, currentQuestion);
+                        } else if (radioGroup.getCheckedRadioButtonId() == R.id.answer4) {
+                            nextQuestion(3, currentQuestion);
+                        }
+                    }
+                }
+                // END ONCLICK
             }
         });
 
@@ -91,21 +144,10 @@ public class ExamModeActivity extends AppCompatActivity {
     }
 
     public void startExamMode(){
-        // Each text segment can be in an array
-        // Animations between transitions, fade in, fade out
-        // Layout: exam_mode.xml
-        // Extra: Store results and show best in settings list
-        // Extra, choose number of questions with a number selector
-        //---------------
-        //TODO randomly picks a word, store its translation and find 3 random translations and store
-        //TODO if correct is picked, add 1, if not, 0, and next, until end (if count > 10, do only 10)
-        //TODO when finished, show final text with % score from counter and total
+        message = (TextView) findViewById(R.id.wordExamView);
+        message.setText(res.getString(R.string.clickStart));
 
-//        This gives a random integer between 65 (inclusive) and 80 (exclusive), one of 65,66,...,78,79
-//        int i1 = r.nextInt(max - min + 1) + min;
-
-        TextView message = (TextView) findViewById(R.id.wordExamView);
-        message.setText("");
+        radioGroup.setVisibility(View.GONE);
 
         Cursor cursor = db.rawQuery("SELECT * FROM " + helper.tableName , null);
 
@@ -113,10 +155,12 @@ public class ExamModeActivity extends AppCompatActivity {
             message = (TextView) findViewById(R.id.wordExamView);
             message.setText(res.getString(R.string.noWordsExam));
             radioGroup.setVisibility(View.GONE);
+            nextButton.setClickable(false);
             return;
         }
 
-        int numberOfQuestions = cursor.getCount()/numMultipleChoiceAns;
+        nextButton.setClickable(true);
+        numberOfQuestions = cursor.getCount()/numMultipleChoiceAns;
 
         ArrayList possibleAnswersPerQuestion = new ArrayList(numMultipleChoiceAns);
         ArrayList possibleAnswersIndexPerQuestion = new ArrayList(numMultipleChoiceAns);
@@ -142,8 +186,8 @@ public class ExamModeActivity extends AppCompatActivity {
             possibleAnswersIndexPerQuestion = new ArrayList(numMultipleChoiceAns);
         }
 
-        String[] wordsPickedToAsk = new String[numberOfQuestions];
-        int[] wordsPickedIndex = new int[numberOfQuestions];
+        wordsPickedToAsk = new String[numberOfQuestions];
+        wordsPickedIndex = new int[numberOfQuestions];
         int[] wordsPickedIndexInDB = new int[numberOfQuestions];
 
 
@@ -156,36 +200,42 @@ public class ExamModeActivity extends AppCompatActivity {
             wordsPickedToAsk[i] = cursor.getString(cursor.getColumnIndexOrThrow(helper.ORIGINAL_WORD));
         }
 
-//        TODO show as possible answers per question
-//        debug(wordsShownArrayList.get());
-        //TODO this is what to compare the answers to when getting radio button selected
-        //toArrays.toString(wordsPickedIndex)); in wordsAnsweredIndex
-        //TODO this is what to display in the top textview as question
-        // Arrays.toString(wordsPickedToAsk));
-
-
-
-//        providedAnswersArray = new int[numberOfQuestions];
-//        correctAnswersArray = new int[numberOfQuestions];
-//        ArrayList wordsPickedIndex = new ArrayList();
-//
-//        for (int i = 0; i < numberOfQuestions; i++) {
-//            int pos = r.nextInt(cursor.getCount());
-//            while(wordsPickedIndex.contains(pos))
-//                pos = r.nextInt(cursor.getCount());
-//
-//            wordsPickedIndex.add(pos); //Positions of correct word in DB
-//            cursor.moveToPosition(pos);
-//            wordsPicked[i] = cursor.getString(cursor.getColumnIndexOrThrow(helper.ORIGINAL_WORD));
-//        }
+        providedAnswersArray = new int[numberOfQuestions];
 
         cursor.close();
     }
 
     public void nextQuestion(int answer, int questionNumberIndex){
-        providedAnswersArray[questionNumberIndex] = answer;
 
-        //TODO update UI
+
+        providedAnswersArray[questionNumberIndex-1] = answer;
+
+        if(questionNumberIndex == providedAnswersArray.length){
+            currentQuestion++;
+            nextButton.callOnClick();
+            return;
+        }
+
+        message.setText(wordsPickedToAsk[questionNumberIndex]);
+        radio1.setText((String)(((ArrayList)(wordsShownArrayList.get(questionNumberIndex))).get(0)));
+        radio2.setText((String)(((ArrayList)(wordsShownArrayList.get(questionNumberIndex))).get(1)));
+        radio3.setText((String)(((ArrayList)(wordsShownArrayList.get(questionNumberIndex))).get(2)));
+        radio4.setText((String)(((ArrayList)(wordsShownArrayList.get(questionNumberIndex))).get(3)));
+
+        radioGroup.clearCheck();
+    }
+
+    public double calcuateResults(){
+
+        float counter = 0;
+        for (int i = 0; i < providedAnswersArray.length; i++) {
+            if (providedAnswersArray[i] == wordsPickedIndex[i])
+                counter++;
+        }
+
+        DecimalFormat twoDForm = new DecimalFormat("#.#");
+
+        return Double.valueOf(twoDForm.format((counter/providedAnswersArray.length)*100));
     }
 
     public void makeToast(String input){
