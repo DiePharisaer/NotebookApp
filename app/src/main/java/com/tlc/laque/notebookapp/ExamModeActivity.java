@@ -63,7 +63,7 @@ public class ExamModeActivity extends AppCompatActivity {
         title = (TextView) findViewById(R.id.titleExamView);
         title.setText(res.getString(R.string.examModeWelcome));
 
-        radioGroup = (RadioGroup) findViewById(R.id.radioGroupQuestions);
+        radioGroup = (RadioGroup) findViewById(R.id.radioGroupQuestions);                       // Initialize buttons, textviews, and radio group
         radio1 = (RadioButton) findViewById(R.id.answer1);
         radio2 = (RadioButton) findViewById(R.id.answer2);
         radio3 = (RadioButton) findViewById(R.id.answer3);
@@ -81,27 +81,27 @@ public class ExamModeActivity extends AppCompatActivity {
         nextButton.setText(res.getString(R.string.start));
         nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
+            public void onClick(View v) {                                          // Listener of the 'Next' button
                 currentQuestion++;
 
-                if(testDone == 1) {
+                if(testDone == 1) {                                                    // If test is finished, clear all and start from beginning
                     recreate();
                     radioGroup.clearCheck();
                     return;
                 }
 
-                if (radioGroup.getVisibility() == View.GONE) {
+                if (radioGroup.getVisibility() == View.GONE) {                        // If radioGroup is GONE, it means that we have to start the test
                     radioGroup.setVisibility(View.VISIBLE);
 
                     message.setText(wordsPickedToAsk[currentQuestion]);
-                    title.setText(res.getString(R.string.clickNext));
+                    title.setText(res.getString(R.string.clickNext));               // Prepare the first question (currentQuestion) UI
                     nextButton.setText(res.getString(R.string.next));
                     radio1.setText((String)(((ArrayList)(wordsShownArrayList.get(currentQuestion))).get(0)));
                     radio2.setText((String)(((ArrayList)(wordsShownArrayList.get(currentQuestion))).get(1)));
                     radio3.setText((String)(((ArrayList)(wordsShownArrayList.get(currentQuestion))).get(2)));
                     radio4.setText((String)(((ArrayList)(wordsShownArrayList.get(currentQuestion))).get(3)));
                 } else if(currentQuestion > numberOfQuestions){
-                    testDone = 1;
+                    testDone = 1;                                                    // If all the questions have been asked, then finish test by displaying result
                     radioGroup.setVisibility(View.GONE);
 
                     double result = calcuateResults();
@@ -120,12 +120,12 @@ public class ExamModeActivity extends AppCompatActivity {
                     return;
                 } else {
 
-                    if (radioGroup.getCheckedRadioButtonId() == -1) {
+                    if (radioGroup.getCheckedRadioButtonId() == -1) {                            // Make toast if no answer selected
                         makeToast(res.getString(R.string.noAnswerSelected));
                         currentQuestion--;
                     }else {
 
-                        if (radioGroup.getCheckedRadioButtonId() == R.id.answer1) {
+                        if (radioGroup.getCheckedRadioButtonId() == R.id.answer1) {             // Select change question when answered, and start method to show next question
                             nextQuestion(0, currentQuestion);
                         } else if (radioGroup.getCheckedRadioButtonId() == R.id.answer2) {
                             nextQuestion(1, currentQuestion);
@@ -143,7 +143,7 @@ public class ExamModeActivity extends AppCompatActivity {
         startExamMode();
     }
 
-    public void startExamMode(){
+    public void startExamMode(){                                                    // Set up of exam mode
         message = (TextView) findViewById(R.id.wordExamView);
         message.setText(res.getString(R.string.clickStart));
 
@@ -151,7 +151,7 @@ public class ExamModeActivity extends AppCompatActivity {
 
         Cursor cursor = db.rawQuery("SELECT * FROM " + helper.tableName , null);
 
-        if(cursor.getCount()<numMultipleChoiceAns){
+        if(cursor.getCount()<numMultipleChoiceAns){                                 // Check if there's at least numMultipleChoiceAns words in notebook, to be able to ask 1 question
             message = (TextView) findViewById(R.id.wordExamView);
             message.setText(res.getString(R.string.noWordsExam));
             radioGroup.setVisibility(View.GONE);
@@ -160,34 +160,34 @@ public class ExamModeActivity extends AppCompatActivity {
         }
 
         nextButton.setClickable(true);
-        numberOfQuestions = cursor.getCount()/numMultipleChoiceAns;
+        numberOfQuestions = cursor.getCount()/numMultipleChoiceAns;               // Number of questions is equal to number of words in DB, divided by four and rounded down
 
-        ArrayList possibleAnswersPerQuestion = new ArrayList(numMultipleChoiceAns);
-        ArrayList possibleAnswersIndexPerQuestion = new ArrayList(numMultipleChoiceAns);
-        wordsShownArrayList = new ArrayList(numberOfQuestions);
-        wordsIndexShownArrayList = new ArrayList<>(numberOfQuestions);
+        ArrayList possibleAnswersPerQuestion = new ArrayList(numMultipleChoiceAns);         // List of possible answers for each question
+        ArrayList possibleAnswersIndexPerQuestion = new ArrayList(numMultipleChoiceAns);    // List of above, but indexes from DB position
+        wordsShownArrayList = new ArrayList(numberOfQuestions);                             // Words shown on each question (temporal array)
+        wordsIndexShownArrayList = new ArrayList<>(numberOfQuestions);                      // Words' indices shown on each question (temporal array)
 
         Random r = new Random();
 
         for(int i = 0; i < numberOfQuestions; i++) {
             for (int j = 0; j < numMultipleChoiceAns; j++) {
                 int pos = r.nextInt(cursor.getCount());
-                while (possibleAnswersIndexPerQuestion.contains(pos)) {
+                while (possibleAnswersIndexPerQuestion.contains(pos)) {                     // Create random number to get word from DB
                     pos = r.nextInt(cursor.getCount());
                 }
                 cursor.moveToPosition(pos);
                 possibleAnswersPerQuestion.add(cursor.getString(cursor.getColumnIndexOrThrow(helper.TRANSLATED_WORD)));
                 possibleAnswersIndexPerQuestion.add(pos);
             }
-            wordsShownArrayList.add(possibleAnswersPerQuestion);
+            wordsShownArrayList.add(possibleAnswersPerQuestion);                            // When done enough words for 1 question, move to next question (i) and cycle again (j)
             wordsIndexShownArrayList.add(possibleAnswersIndexPerQuestion);
 
             possibleAnswersPerQuestion = new ArrayList(numMultipleChoiceAns);
             possibleAnswersIndexPerQuestion = new ArrayList(numMultipleChoiceAns);
         }
 
-        wordsPickedToAsk = new String[numberOfQuestions];
-        wordsPickedIndex = new int[numberOfQuestions];
+        wordsPickedToAsk = new String[numberOfQuestions];                                  // Examined words, 1 per question
+        wordsPickedIndex = new int[numberOfQuestions];                                     // Examined words' indices, 1 per question
         int[] wordsPickedIndexInDB = new int[numberOfQuestions];
 
 
@@ -197,7 +197,7 @@ public class ExamModeActivity extends AppCompatActivity {
             wordsPickedIndex[i] = pos;
             wordsPickedIndexInDB[i] = (int)(((ArrayList)(wordsIndexShownArrayList.get(i))).get(pos));
             cursor.moveToPosition(wordsPickedIndexInDB[i]);
-            wordsPickedToAsk[i] = cursor.getString(cursor.getColumnIndexOrThrow(helper.ORIGINAL_WORD));
+            wordsPickedToAsk[i] = cursor.getString(cursor.getColumnIndexOrThrow(helper.ORIGINAL_WORD));     // Get original word which will be asked to translate
         }
 
         providedAnswersArray = new int[numberOfQuestions];
@@ -205,12 +205,12 @@ public class ExamModeActivity extends AppCompatActivity {
         cursor.close();
     }
 
-    public void nextQuestion(int answer, int questionNumberIndex){
+    public void nextQuestion(int answer, int questionNumberIndex){              // Method to update UI for next question
 
 
         providedAnswersArray[questionNumberIndex-1] = answer;
 
-        if(questionNumberIndex == providedAnswersArray.length){
+        if(questionNumberIndex == providedAnswersArray.length){                 // If question is answered correctly, add 1 point
             currentQuestion++;
             nextButton.callOnClick();
             return;
@@ -228,7 +228,7 @@ public class ExamModeActivity extends AppCompatActivity {
     public double calcuateResults(){
 
         float counter = 0;
-        for (int i = 0; i < providedAnswersArray.length; i++) {
+        for (int i = 0; i < providedAnswersArray.length; i++) {             // Add up all points and divide by total number of questions to obtain result
             if (providedAnswersArray[i] == wordsPickedIndex[i])
                 counter++;
         }

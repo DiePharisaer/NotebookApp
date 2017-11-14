@@ -67,20 +67,6 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.TimeZone;
 
-//TODO
-//domain
-//import/export csv
-//textToSpeech
-//
-
-// Extra exam: Animations between transitions, fade in, fade out
-// Extra exam: Store results and show best in settings list
-// Extra exam: choose number of questions with a number selector
-
-//alphabetical order
-//SpeechToText
-//sign out option
-// save last letter for when close app, delete something, change orientation
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, GoogleApiClient.OnConnectionFailedListener {
 
@@ -120,11 +106,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         setSupportActionBar(toolbar);
 //        wordsContainer = (LinearLayout) findViewById(R.id.layout_for_text);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);       // Floating action button to add new word pair
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);       // Create Dialog to write words
                 builder.setTitle("Add a word pair");
                 LinearLayout layout = new LinearLayout(context);
                 layout.setOrientation(LinearLayout.VERTICAL);
@@ -135,7 +121,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         new InputFilter() {
                             @Override
                             public CharSequence filter(CharSequence cs, int start,
-                                                       int end, Spanned spanned, int dStart, int dEnd) {
+                                                       int end, Spanned spanned, int dStart, int dEnd) {    // Check that only letters are included in the words
                                 if(cs.toString().matches("[a-zA-Z ]+")){
                                     return cs;
                                 }
@@ -152,7 +138,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                             @Override
                             public CharSequence filter(CharSequence cs, int start,
                                                        int end, Spanned spanned, int dStart, int dEnd) {
-                                if(cs.toString().matches("[a-zA-Z ]+")){
+                                if(cs.toString().matches("[a-zA-Z ]+")){                // Check that only letters are included in the words
                                     return cs;
                                 }
                                 return "";
@@ -167,12 +153,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 builder.setPositiveButton(res.getString(R.string.addDialog), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        word1 = input1.getText().toString();
+                        word1 = input1.getText().toString();                        // Confirm words inputed
                         word2 = input2.getText().toString();
 
                         if(!existsInDb(word1)) {
-                            insertRecord(word1, word2);
-                            updateWordList((word1.substring(0, 1)).toLowerCase());
+                            insertRecord(word1, word2);                             // If word doesn't exist in DB, add it
+                            updateWordList((word1.substring(0, 1)).toLowerCase());  // Update UI
                         }else{
                             makeToast("This word exists already!");
                         }
@@ -200,7 +186,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)      // Sign in Google Account
                 .requestEmail()
                 .requestProfile()
                 .build();
@@ -212,30 +198,23 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
 
         alphabetAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, res.getStringArray(R.array.alphabet));
-        alphabetView = (ListView) findViewById(R.id.listView_for_alphabet);
+        alphabetView = (ListView) findViewById(R.id.listView_for_alphabet);                                 //Alphabet on sidebar
         alphabetView.setAdapter(alphabetAdapter);
 
         alphabetView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                updateWordList(((TextView) view).getText().toString().toLowerCase());
-//                TypedValue typedValue = new TypedValue();
-//                getTheme().resolveAttribute(R.attr.colorAccent, typedValue, true);
-//                int color = typedValue.data;
-//                view.setBackgroundColor(color);
-//
-//                ((TextView) view).setTextColor(Color.WHITE);
-                debug((res.getStringArray(R.array.alphabet)[parent.getPositionForView(view)]).toLowerCase());
+                updateWordList(((TextView) view).getText().toString().toLowerCase());                       // Update UI on click of letter
             }
         });
 
-        wordListAdapter = new ArrayAdapter<>(this, R.layout.row_container);
+        wordListAdapter = new ArrayAdapter<>(this, R.layout.row_container);                     // Words in notebook
         wordsListView = (ListView) findViewById(R.id.listView_for_words);
         wordsListView.setAdapter(wordListAdapter);
 
         wordsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {                    // Onclick for words, to edit them
                 String fullString = ((TextView) view).getText().toString();
                 String[] parts = fullString.split("-->");
                 final String firstWord = parts[0];
@@ -304,7 +283,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         wordsListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {           // Long click listener to to delete word
                 String fullString = ((TextView) view).getText().toString();
                 String[] parts = fullString.split("-->");
                 final String firstWord = parts[0];
@@ -316,7 +295,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         });
 
-        wordListAdapterItems = new ArrayAdapter<>(this, R.layout.row_container);
+        wordListAdapterItems = new ArrayAdapter<>(this, R.layout.row_container);            // Array for textToSpeech function
         wordsListItemsView = (ListView) findViewById(R.id.listView_for_words2);
         wordsListItemsView.setAdapter(wordListAdapterItems);
 
@@ -329,13 +308,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
                 wordToSpeech = firstWord;
 
-                sendIntentTTS();
+                sendIntentTTS();                                                // Start TTS engine
             }
         });
 
         wordsListItemsView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {               // Long click to TTS the second word, the translation
                 String fullString = ((TextView)(wordsListView.getChildAt(position))).getText().toString();
                 String[] parts = fullString.split("-->");
                 String secondWord = parts[1];
@@ -383,7 +362,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_settings) {                           // List of settings in the dropdown options menu
             return true;
         }else if (id == R.id.action_signin){
             startSignInProcess();
@@ -436,15 +415,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         super.onActivityResult(requestCode, resultCode, data);
 
         // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
-        if (requestCode == RC_SIGN_IN) {
+        if (requestCode == RC_SIGN_IN) {                                                            // Check intent to Sign In
             GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
             handleSignInResult(result);
-        }else if(requestCode == CHECK_CODE){
-            debug("intent arrived");
+        }else if(requestCode == CHECK_CODE){                                                        // Check intent for text to speech
             if (resultCode == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS) {
                 // the user has the necessary data - create the TTS
-                debug("can speakdebug");
-
 
                 tts.speak(wordToSpeech, TextToSpeech.QUEUE_FLUSH, null,null);
             } else {
@@ -520,7 +496,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         cursor.close();
     }
 
-    public void updateWordList(String selectedLetter){
+    public void updateWordList(String selectedLetter){                          // Update word list UI, by cycling through DB entries and adding to list view
         wordsListView.setAdapter(null);
         wordsListItemsView.setAdapter(null);
 
@@ -602,11 +578,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     public void importCSV() {
-        File exportDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        File exportDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);        // Import CSV file from default download location
         String line = "";
-        debug("method");
+        debug("method");                                                                                        // Reads each line and split the words, adds them to DB
         try {
-            FileReader file = new FileReader(exportDir + "/NotebookDatabase.csv");
+            FileReader file = new FileReader(exportDir + "/NotebookDatabaseImport.csv");
             BufferedReader buffer = new BufferedReader(file);
             debug("try");
             while ((line = buffer.readLine()) != null) {
@@ -622,7 +598,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         updateWordList("#");
     }
 
-    public boolean exportCSV() {
+    public boolean exportCSV() {                                                            // Cycle through DB and write each word to CSV file
         String state = Environment.getExternalStorageState();
         debug("1");
         if (!Environment.MEDIA_MOUNTED.equals(state)) {
@@ -677,7 +653,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
 
     @TargetApi(Build.VERSION_CODES.M)
-    public void checkForWritePermission(){
+    public void checkForWritePermission(){                                      // In newer Android versions, ask for permission to write to storage
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
             final boolean writeGranted = ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
             if(writeGranted){ //Already have both necessary permissions
@@ -730,7 +706,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    public void textToSpeech(){
+    public void textToSpeech(){                                     // Text to speech method
         debug("text to speech");
 
         initListener = new TextToSpeech.OnInitListener() {
@@ -757,7 +733,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         debug("after initlistener");
     }
 
-    public void sendIntentTTS(){
+    public void sendIntentTTS(){                                                         // Send TTS intent while waiting engine set up
         Intent checkTTSIntent = new Intent();
         checkTTSIntent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
         startActivityForResult(checkTTSIntent, CHECK_CODE);
