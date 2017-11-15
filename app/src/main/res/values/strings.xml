@@ -12,6 +12,7 @@
     <string name="cancelDialog">Cancel</string>
     <string name="deleteDialog">Delete</string>
     <string name="originalWord">Word</string>
+    <string name="empty">Cannot add empty word!</string>
     <string name="translatedWord">Translated Word</string>
     <string name="arrow">--></string>
     <string name="emptydb">Empty DB</string>

@@ -139,6 +139,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                         word1 = input1.getText().toString();                        // Confirm words inputed
                         word2 = input2.getText().toString();
 
+                        if(word1.isEmpty() || word2.isEmpty()) {
+                            makeToast(res.getString(R.string.empty));
+                            return;
+                        }
+
                         if(!existsInDb(word1)) {
                             insertRecord(word1, word2);                             // If word doesn't exist in DB, add it
                             updateWordList((word1.substring(0, 1)).toLowerCase());  // Update UI
@@ -242,8 +247,19 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                     public void onClick(DialogInterface dialog, int which) {
                         word1 = input1.getText().toString();
                         word2 = input2.getText().toString();
-                        updateRecord(word1, word2, findWordPosition(firstWord));
-                        updateWordList((word1.substring(0,1)).toLowerCase());
+
+                        if(word1.isEmpty() || word2.isEmpty()) {
+                            makeToast(res.getString(R.string.empty));
+                            return;
+                        }
+
+                        if(!existsInDb(word1)) {
+                            updateRecord(word1, word2, findWordPosition(firstWord));
+                            updateWordList((word1.substring(0,1)).toLowerCase());             // Update UI
+                        }else{
+                            makeToast("This word exists already!");
+                        }
+
                     }
                 });
                 builder.setNegativeButton(res.getString(R.string.cancelDialog), new DialogInterface.OnClickListener() {
