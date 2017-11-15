@@ -1,7 +1,6 @@
 package com.tlc.laque.notebookapp;
 
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -19,7 +18,6 @@ import android.widget.Toast;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Random;
 
 

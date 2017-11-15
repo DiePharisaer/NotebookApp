@@ -7,30 +7,18 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Color;
-import android.media.Image;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.SyncStateContract;
 import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.LinearLayoutCompat;
 import android.text.InputFilter;
-import android.text.InputType;
 import android.text.Spanned;
 import android.util.Log;
-import android.util.TypedValue;
-import android.view.DragEvent;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -40,7 +28,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -63,12 +50,10 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Locale;
-import java.util.TimeZone;
 
 
-public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, GoogleApiClient.OnConnectionFailedListener {
+public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener {
 
     GoogleApiClient mGoogleApiClient;
     String DEBUG = "DEBUG";
@@ -79,7 +64,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     ListView wordsListView;
     ListView wordsListItemsView;
     Context context;
-    LinearLayout wordsContainer;
     String word1;
     String word2;
     private SQLiteDatabase db;
@@ -104,7 +88,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-//        wordsContainer = (LinearLayout) findViewById(R.id.layout_for_text);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);       // Floating action button to add new word pair
         fab.setOnClickListener(new View.OnClickListener() {
@@ -177,14 +160,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         });
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
-        toggle.syncState();
-
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)      // Sign in Google Account
                 .requestEmail()
@@ -287,7 +262,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 String fullString = ((TextView) view).getText().toString();
                 String[] parts = fullString.split("-->");
                 final String firstWord = parts[0];
-                final String secondWord = parts[1];
 
                 deleteRecord(findWordPosition(firstWord));
                 updateWordList((parts[0].substring(0,1)).toLowerCase()); //TODO update with last letter
@@ -326,8 +300,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         });
 
-
-
         updateWordList("a");
         textToSpeech();
     }
@@ -361,10 +333,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {                           // List of settings in the dropdown options menu
-            return true;
-        }else if (id == R.id.action_signin){
+        if (id == R.id.action_signin){
             startSignInProcess();
         }else if(id == R.id.delete_db){
             deleteAllRecords();
@@ -380,30 +349,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return super.onOptionsItemSelected(item);
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
-    @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
-        int id = item.getItemId();
-
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
-        }
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
-    }
 
     private void startSignInProcess(){
         Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
@@ -473,27 +418,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         super.onDestroy();
         db.close();
-    }
-
-    public void debugDB(){
-        Cursor cursor = db.rawQuery("SELECT * FROM " + helper.tableName, null);
-
-        if(cursor.getCount()>0) {
-            for (int i = 0; i < cursor.getCount(); i++) {
-                cursor.moveToNext();
-                word1 = cursor.getString(cursor.getColumnIndexOrThrow(helper.ORIGINAL_WORD));
-                word2 = cursor.getString(cursor.getColumnIndexOrThrow(helper.TRANSLATED_WORD));
-                int id = cursor.getInt(cursor.getColumnIndexOrThrow(helper.COLUMN_ID));
-                String firstLetter = cursor.getString(cursor.getColumnIndexOrThrow(helper.FIRST_LETTER));
-
-                debug("entry id: " + id);
-                debug("original word: " + word1);
-                debug("translated word: " + word2);
-                debug("first letter: " + firstLetter);
-
-            }
-        }
-        cursor.close();
     }
 
     public void updateWordList(String selectedLetter){                          // Update word list UI, by cycling through DB entries and adding to list view
